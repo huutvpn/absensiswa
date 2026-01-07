@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi + Download Excel</title>
+    <title>Absensi Sekolah - GitHub Ready</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -12,8 +12,6 @@
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            
-            /* Warna Status */
             --col-h: #dcfce7; --txt-h: #166534;
             --col-s: #dbeafe; --txt-s: #1e40af;
             --col-i: #fef3c7; --txt-i: #92400e;
@@ -39,9 +37,8 @@
         header { background: var(--bg-card); padding: 0.8rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         h2 { font-size: 1.1rem; }
         
-        /* Tombol Download */
         .btn-download {
-            background-color: #10b981; /* Hijau Excel */
+            background-color: #10b981;
             color: white;
             border: none;
             padding: 0.5rem 1rem;
@@ -52,35 +49,31 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            transition: background 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .btn-download:hover { background-color: #059669; }
+        .btn-download:hover { background-color: #059669; transform: translateY(-1px); }
+        .btn-download:active { transform: translateY(0); }
 
         .content-scroll { padding: 1.5rem; overflow-y: auto; flex: 1; }
 
-        /* Tabs */
         .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
         .tab { padding: 0.4rem 1rem; border: 1px solid var(--border); border-radius: 15px; background: white; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
         .tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Recap Cards */
         .recap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.5rem; }
         .card { background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
         .card-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 5px; font-weight: 700; text-transform: uppercase; }
         .card-val { font-size: 1.5rem; font-weight: 800; }
         .bg-h .card-val { color: #166534; } .bg-s .card-val { color: #1e40af; } .bg-i .card-val { color: #92400e; } .bg-a .card-val { color: #991b1b; }
 
-        /* Add Student */
         .add-box { display: flex; gap: 8px; margin-bottom: 1rem; background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
         .add-input { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
         .add-btn { background: var(--primary); color: white; border: none; padding: 0 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
 
-        /* Legend */
         .legend { display: flex; gap: 15px; margin-bottom: 0.5rem; font-size: 0.8rem; align-items: center; }
         .l-item { display: flex; align-items: center; gap: 5px; }
         .l-box { width: 15px; height: 15px; border-radius: 4px; border: 1px solid #ccc; }
         
-        /* Grid Table */
         .grid-container { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); overflow: auto; position: relative; }
         table { border-collapse: collapse; min-width: 1200px; } 
         th { background: #f8fafc; padding: 8px 4px; font-size: 0.8rem; text-align: center; border: 1px solid var(--border); position: sticky; top: 0; z-index: 5; font-weight: 600; color: var(--text-muted); }
@@ -103,7 +96,6 @@
         .status-A { background-color: var(--col-a); color: var(--txt-a); }
         .status- { background-color: var(--col-empty); color: #ccc; }
 
-        /* Mobile */
         .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; }
         @media (max-width: 768px) {
             aside { position: absolute; height: 100%; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
@@ -111,13 +103,12 @@
             .menu-toggle { display: block; }
             .recap-grid { grid-template-columns: 1fr 1fr; }
             .card-val { font-size: 1.2rem; }
-            .btn-download span { display: none; } /* Hide text on mobile, keep icon */
+            .btn-download span { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
     <aside id="sidebar">
         <div class="brand">📚 Absensi</div>
         <div class="menu-label">Pilih Kelas</div>
@@ -125,7 +116,6 @@
         <button class="reset-btn" onclick="resetAll()">🗑️ Reset Data</button>
     </aside>
 
-    <!-- Main -->
     <main>
         <header>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -133,120 +123,74 @@
                 <h2 id="pageTitle">Rekap Absensi</h2>
             </div>
             
-            <button class="btn-download" onclick="downloadCSV()">
+            <button class="btn-download" id="dlBtn" onclick="downloadCSV()">
                 📥 <span>Unduh Rekap (.csv)</span>
             </button>
         </header>
 
         <div class="content-scroll">
-            
-            <!-- Month Tabs -->
             <div class="tabs" id="monthTabs"></div>
 
-            <!-- Recap Cards -->
             <div class="recap-grid">
-                <div class="card bg-h">
-                    <div class="card-label">Total Hadir (H)</div>
-                    <div class="card-val" id="valH">0</div>
-                </div>
-                <div class="card bg-s">
-                    <div class="card-label">Total Sakit (S)</div>
-                    <div class="card-val" id="valS">0</div>
-                </div>
-                <div class="card bg-i">
-                    <div class="card-label">Total Izin (I)</div>
-                    <div class="card-val" id="valI">0</div>
-                </div>
-                <div class="card bg-a">
-                    <div class="card-label">Total Alpha (A)</div>
-                    <div class="card-val" id="valA">0</div>
-                </div>
+                <div class="card bg-h"><div class="card-label">Total Hadir</div><div class="card-val" id="valH">0</div></div>
+                <div class="card bg-s"><div class="card-label">Total Sakit</div><div class="card-val" id="valS">0</div></div>
+                <div class="card bg-i"><div class="card-label">Total Izin</div><div class="card-val" id="valI">0</div></div>
+                <div class="card bg-a"><div class="card-label">Total Alpha</div><div class="card-val" id="valA">0</div></div>
             </div>
 
-            <!-- Input Student -->
             <div class="add-box">
                 <input type="text" id="inpName" class="add-input" placeholder="Ketik nama siswa..." onkeypress="handleEnter(event)">
                 <button class="add-btn" onclick="addStudent()">+ Tambah</button>
             </div>
 
-            <!-- Legend -->
             <div class="legend">
-                <div class="l-item"><div class="l-box" style="background:var(--col-h)"></div> Hadir (Klik)</div>
-                <div class="l-item"><div class="l-box" style="background:var(--col-s)"></div> Sakit (2x)</div>
-                <div class="l-item"><div class="l-box" style="background:var(--col-i)"></div> Izin (3x)</div>
-                <div class="l-item"><div class="l-box" style="background:var(--col-a)"></div> Alpha (4x)</div>
+                <div class="l-item"><div class="l-box" style="background:var(--col-h)"></div> Hadir</div>
+                <div class="l-item"><div class="l-box" style="background:var(--col-s)"></div> Sakit</div>
+                <div class="l-item"><div class="l-box" style="background:var(--col-i)"></div> Izin</div>
+                <div class="l-item"><div class="l-box" style="background:var(--col-a)"></div> Alpha</div>
             </div>
 
-            <!-- Table Grid -->
             <div class="grid-container">
                 <table>
                     <thead>
                         <tr id="tableHeader">
                             <th class="sticky-col">Nama Siswa</th>
-                            <!-- Dates generated by JS -->
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                        <!-- Rows generated by JS -->
-                    </tbody>
+                    <tbody id="tableBody"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
     <script>
-        // --- Konfigurasi ---
         const classes = ["Kelas 4A", "Kelas 4B", "Kelas 4C", "Kelas 3A", "Kelas 3B", "Kelas 3C"];
         const months = ["Bulan 1", "Bulan 2", "Bulan 3", "Bulan 4", "Bulan 5"];
         const totalDays = 31; 
-        
         const statusCycle = ["H", "S", "I", "A", ""];
 
-        let appData = {
-            currentClassIdx: 0,
-            currentMonthIdx: 0,
-            students: {}, 
-            attendance: {} 
-        };
+        let appData = { currentClassIdx: 0, currentMonthIdx: 0, students: {}, attendance: {} };
 
-        // --- Load & Save ---
         window.onload = function() {
-            const saved = localStorage.getItem('absensi_grid_v2');
-            if (saved) {
-                appData = JSON.parse(saved);
-            } else {
-                initEmptyData();
-            }
+            const saved = localStorage.getItem('absensi_final');
+            if (saved) { appData = JSON.parse(saved); } 
+            else { initEmptyData(); }
             renderAll();
         };
 
         function initEmptyData() {
-            classes.forEach(c => {
-                appData.students[c] = [];
-                appData.attendance[c] = {};
-            });
+            classes.forEach(c => { appData.students[c] = []; appData.attendance[c] = {}; });
             save();
         }
 
-        function save() {
-            localStorage.setItem('absensi_grid_v2', JSON.stringify(appData));
-        }
+        function save() { localStorage.setItem('absensi_final', JSON.stringify(appData)); }
 
         function resetAll() {
-            if(confirm("Hapus SEMUA DATA? Data tidak bisa dikembalikan.")) {
-                localStorage.removeItem('absensi_grid_v2');
-                location.reload();
-            }
+            if(confirm("Hapus SEMUA DATA?")) { localStorage.removeItem('absensi_final'); location.reload(); }
         }
 
-        // --- Logic UI ---
-
         function renderAll() {
-            renderSidebar();
-            renderTabs();
-            renderTableHeader(); 
-            renderTableBody();    
-            updateRecap();        
+            renderSidebar(); renderTabs(); renderTableHeader(); renderTableBody(); updateRecap();
         }
 
         function renderSidebar() {
@@ -294,13 +238,12 @@
             tbody.innerHTML = '';
 
             if(students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${totalDays+1}" style="text-align:center; padding:2rem; color:#aaa;">Belum ada siswa. Tambah nama di atas.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${totalDays+1}" style="text-align:center; padding:2rem; color:#aaa;">Belum ada data siswa.</td></tr>`;
                 return;
             }
 
             students.forEach((name, idx) => {
                 const tr = document.createElement('tr');
-                
                 const tdName = document.createElement('td');
                 tdName.className = 'sticky-col';
                 tdName.innerHTML = `<span>${name}</span> <span class="btn-del" onclick="deleteStudent(${idx})">&times;</span>`;
@@ -324,94 +267,61 @@
         function toggleStatus(cls, name, mth, day) {
             if(!appData.attendance[cls][name]) appData.attendance[cls][name] = {};
             if(!appData.attendance[cls][name][mth]) appData.attendance[cls][name][mth] = {};
-
             const currentStatus = appData.attendance[cls][name][mth][day] || "";
             const currentIndex = statusCycle.indexOf(currentStatus);
             const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
-
             appData.attendance[cls][name][mth][day] = nextStatus;
-            
             save();
-            renderTableBody();
-            updateRecap();
+            renderTableBody(); updateRecap();
         }
 
         function updateRecap() {
             const cls = classes[appData.currentClassIdx];
             const mth = months[appData.currentMonthIdx];
             const students = appData.students[cls] || [];
-
             let totalH = 0, totalS = 0, totalI = 0, totalA = 0;
-
             students.forEach(name => {
                 if(appData.attendance[cls][name] && appData.attendance[cls][name][mth]) {
                     const monthData = appData.attendance[cls][name][mth];
                     for(let d=1; d<=totalDays; d++) {
                         const stat = monthData[d];
-                        if(stat === "H") totalH++;
-                        else if(stat === "S") totalS++;
-                        else if(stat === "I") totalI++;
-                        else if(stat === "A") totalA++;
+                        if(stat === "H") totalH++; else if(stat === "S") totalS++; else if(stat === "I") totalI++; else if(stat === "A") totalA++;
                     }
                 }
             });
-
             document.getElementById('valH').innerText = totalH;
             document.getElementById('valS').innerText = totalS;
             document.getElementById('valI').innerText = totalI;
             document.getElementById('valA').innerText = totalA;
         }
 
-        // --- Input Siswa ---
         function handleEnter(e) { if(e.key === 'Enter') addStudent(); }
-
         function addStudent() {
             const inp = document.getElementById('inpName');
             const name = inp.value.trim();
             const cls = classes[appData.currentClassIdx];
-
             if(!name) return alert("Nama kosong!");
             if(appData.students[cls].includes(name)) return alert("Nama sudah ada!");
-
             appData.students[cls].push(name);
             save();
-            renderTableBody();
-            updateRecap();
-            inp.value = '';
-            inp.focus();
+            renderTableBody(); updateRecap();
+            inp.value = ''; inp.focus();
         }
-
         function deleteStudent(idx) {
             const cls = classes[appData.currentClassIdx];
             const name = appData.students[cls][idx];
-            if(confirm(`Hapus ${name}? Data absensinya akan hilang.`)) {
+            if(confirm(`Hapus ${name}?`)) {
                 appData.students[cls].splice(idx, 1);
                 delete appData.attendance[cls][name];
                 save();
-                renderTableBody();
-                updateRecap();
+                renderTableBody(); updateRecap();
             }
         }
+        function switchClass(idx) { appData.currentClassIdx = idx; renderAll(); document.getElementById('inpName').value = ''; if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open'); }
+        function switchMonth(idx) { appData.currentMonthIdx = idx; renderTabs(); renderTableBody(); updateRecap(); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
-        function switchClass(idx) {
-            appData.currentClassIdx = idx;
-            renderAll();
-            document.getElementById('inpName').value = '';
-            if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
-        }
-
-        function switchMonth(idx) {
-            appData.currentMonthIdx = idx;
-            renderTabs();
-            renderTableBody();
-            updateRecap();
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-        }
-
-        // --- DOWNLOAD CSV FUNCTION ---
+        // --- FUNGSI DOWNLOAD YANG DIPERBAIKI (BLOB API) ---
         function downloadCSV() {
             const cls = classes[appData.currentClassIdx];
             const mth = months[appData.currentMonthIdx];
@@ -422,36 +332,47 @@
                 return;
             }
 
-            // 1. Buat Header CSV
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF untuk support Excel (BOM)
+            // Siapkan Header
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM Excel
             let headers = ["Nama Siswa"];
-            
-            // Tambahkan kolom Tanggal 1-31
             for(let i=1; i<=totalDays; i++) headers.push(`Tgl ${i}`);
-            // Tambahkan kolom Rekapitulasi
             headers.push("TOTAL Hadir", "TOTAL Sakit", "TOTAL Izin", "TOTAL Alpha");
-            
             csvContent += headers.join(",") + "\r\n";
 
-            // 2. Isi Data Siswa
+            // Siapkan Data
             students.forEach(name => {
-                // Kita quote nama siswa untuk menangani jika ada koma di nama
-                let row = [`"${name}"`]; 
-                
+                let row = [`"${name}"`]; // Quote nama
                 let counts = {h:0, s:0, i:0, a:0};
                 let data = appData.attendance[cls][name][mth] || {};
 
-                // Loop tanggal
                 for(let i=1; i<=totalDays; i++) {
                     let status = data[i] || "";
-                    row.push(status); // Masukkan status H/S/I/A atau kosong
-
-                    // Hitung Rekap
+                    row.push(status);
                     if(status == 'H') counts.h++;
                     else if(status == 'S') counts.s++;
                     else if(status == 'I') counts.i++;
                     else if(status == 'A') counts.a++;
                 }
+                row.push(counts.h, counts.s, counts.i, counts.a);
+                csvContent += row.join(",") + "\r\n";
+            });
 
-                // Masukkan total rekap di ujung baris
-                row.push(counts.h, cou
+            // 1. Buat Blob (Binary Large Object) dari konten CSV
+            var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            
+            // 2. Buat URL Link Download
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement("a");
+            
+            // 3. Atur Atribut Link
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Absensi_${cls}_${mth}.csv`);
+            
+            // 4. Klik Otomatis dan Bersihkan
+            document.body.appendChild(link); // Diperlukan Firefox
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
