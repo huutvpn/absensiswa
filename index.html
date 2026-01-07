@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi & Nilai Otomatis</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #6366f1;
+            --success: #10b981; /* Warna Hasil Akhir */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            
+            /* Warna Absen */
+            --col-h: #dcfce7; --txt-h: #166534;
+            --col-s: #dbeafe; --txt-s: #1e40af;
+            --col-i: #fef3c7; --txt-i: #92400e;
+            --col-a: #fee2e2; --txt-a: #991b1b;
+            --col-empty: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar */
+        aside { width: 240px; background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem; z-index: 10; }
+        .brand { font-size: 1.2rem; font-weight: 800; color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+        .menu-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 700; text-transform: uppercase; }
+        .class-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; overflow-y: auto; flex: 1; }
+        .class-btn { width: 100%; padding: 0.6rem; text-align: left; border: 1px solid transparent; border-radius: 6px; background: none; cursor: pointer; font-weight: 500; color: var(--text-main); }
+        .class-btn:hover { background: #f1f5f9; }
+        .class-btn.active { background: #eff6ff; color: var(--primary); border-color: #bfdbfe; font-weight: 700; }
+        .reset-btn { margin-top: 1rem; padding: 0.6rem; background: #fee2e2; color: #ef4444; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+        /* Main Content */
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        header { background: var(--bg-card); padding: 0.8rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        h2 { font-size: 1.1rem; }
+        
+        .btn-download {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-download:hover { background-color: #059669; }
+
+        .content-scroll { padding: 1.5rem; overflow-y: auto; flex: 1; }
+
+        /* View Tabs */
+        .view-tabs { display: flex; gap: 10px; margin-bottom: 1rem; }
+        .view-btn {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            flex: 1;
+        }
+        .view-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .view-btn.mode-grade.active { background: var(--secondary); border-color: var(--secondary); }
+        .view-btn.mode-result.active { background: var(--success); border-color: var(--success); }
+
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+        .tab { padding: 0.4rem 1rem; border: 1px solid var(--border); border-radius: 15px; background: white; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
+        .tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Dashboard Info */
+        .info-box { background: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; border: 1px solid #ffeeba; }
+
+        /* Student Input */
+        .add-box { display: flex; gap: 8px; margin-bottom: 1rem; background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+        .add-input { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
+        .add-btn { background: var(--primary); color: white; border: none; padding: 0 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
+
+        /* Table Grid */
+        .grid-container { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); overflow: auto; position: relative; }
+        table { border-collapse: collapse; min-width: 1100px; } 
+        th { background: #f8fafc; padding: 10px 4px; font-size: 0.8rem; text-align: center; border: 1px solid var(--border); position: sticky; top: 0; z-index: 5; font-weight: 600; color: var(--text-muted); }
+        td { padding: 0; border: 1px solid var(--border); text-align: center; font-size: 0.85rem; height: 38px; }
+        
+        /* Sticky Columns */
+        th.sticky-col, td.sticky-col {
+            position: sticky; left: 0; background: var(--bg-card); z-index: 10; min-width: 120px; text-align: left; padding: 0 10px; border-right: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between;
+        }
+        th.sticky-col { z-index: 15; background: #f8fafc; }
+
+        /* Cell Styles */
+        .day-cell { cursor: pointer; font-weight: 700; transition: background 0.1s; min-width: 32px; }
+        .day-cell:hover { opacity: 0.8; }
+        .status-H { background-color: var(--col-h); color: var(--txt-h); }
+        .status-S { background-color: var(--col-s); color: var(--txt-s); }
+        .status-I { background-color: var(--col-i); color: var(--txt-i); }
+        .status-A { background-color: var(--col-a); color: var(--txt-a); }
+        .status- { background-color: var(--col-empty); color: #ccc; }
+
+        /* Result Mode Specifics */
+        .score-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .score-high { background: #dcfce7; color: #166534; } /* > 80 */
+        .score-med { background: #fef9c3; color: #854d0e; } /* 60-80 */
+        .score-low { background: #fee2e2; color: #991b1b; } /* < 60 */
+
+        .grade-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-weight: 600;
+            color: var(--secondary);
+            background: transparent;
+            outline: none;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .grade-input:focus { background: #eef2ff; }
+
+        .btn-del { color: #cbd5e2; cursor: pointer; font-weight: bold; font-size: 1.1rem; line-height: 1; }
+        .btn-del:hover { color: #ef4444; }
+
+        .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; }
+        @media (max-width: 768px) {
+            aside { position: absolute; height: 100%; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+            aside.open { transform: translateX(0); }
+            .menu-toggle { display: block; }
+            .btn-download span { display: none; }
+            .view-tabs { overflow-x: auto; }
+            .view-btn { flex: 0 0 auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="brand">🎓 Sekolah Pintar</div>
+        <div class="menu-label">Pilih Kelas</div>
+        <ul class="class-list" id="classList"></ul>
+        <button class="reset-btn" onclick="resetAll()">🗑️ Reset Data</button>
+    </aside>
+
+    <main>
+        <header>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h2 id="pageTitle">Rekap</h2>
+            </div>
+            
+            <button class="btn-download" onclick="downloadCSV()">
+                📥 <span>Unduh Laporan Hasil</span>
+            </button>
+        </header>
+
+        <div class="content-scroll">
+            
+            <!-- View Switcher -->
+            <div class="view-tabs">
+                <button class="view-btn active" id="btnViewAbsen" onclick="switchView('absen')">📅 Mode Absensi</button>
+                <button class="view-btn mode-grade" id="btnViewNilai" onclick="switchView('nilai')">💯 Input Nilai</button>
+                <button class="view-btn mode-result" id="btnViewHasil" onclick="switchView('hasil')">🚀 Hasil Akhir (Otomatis)</button>
+            </div>
+
+            <!-- Month Tabs -->
+            <div class="tabs" id="monthTabs"></div>
+
+            <!-- Info Box Logic -->
+            <div id="logicInfo" class="info-box" style="display:none;">
+                <strong>Logika Perhitungan:</strong> 
+                <ul style="margin-left:20px; margin-top:5px;">
+                    <li>Nilai Dasar = Rata-rata Nilai Harian (Jika kosong = 100)</li>
+                    <li>Penalti Alpha: -5 poin</li>
+                    <li>Penalti Izin: -2 poin</li>
+                    <li>Penalti Sakit: -2 poin</li>
+                    <li>Hasil Akhir = Nilai Dasar - Total Penalti</li>
+                </ul>
+            </div>
+
+            <div class="add-box">
+                <input type="text" id="inpName" class="add-input" placeholder="Ketik nama siswa..." onkeypress="handleEnter(event)">
+                <button class="add-btn" onclick="addStudent()">+ Tambah</button>
+            </div>
+
+            <div class="grid-container">
+                <table>
+                    <thead>
+                        <tr id="tableHeader">
+                            <th class="sticky-col">Nama Siswa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const classes = ["Kelas 4A", "Kelas 4B", "Kelas 4C", "Kelas 3A", "Kelas 3B", "Kelas 3C"];
+        const months = ["Bulan 1", "Bulan 2", "Bulan 3", "Bulan 4", "Bulan 5"];
+        const totalDays = 31; 
+        const statusCycle = ["H", "S", "I", "A", ""];
+
+        // KONFIGURASI PENALTI
+        const PENALTY_ALPHA = 5;
+        const PENALTY_SAKIT = 2;
+        const PENALTY_IZIN = 2;
+
+        let appData = { 
+            currentClassIdx: 0, 
+            currentMonthIdx: 0,
+            viewMode: 'absen', 
+            students: {}, 
+            attendance: {},
+            grades: {}
+        };
+
+        window.onload = function() {
+            const saved = localStorage.getItem('sekolah_smart_v5');
+            if (saved) { appData = JSON.parse(saved); } 
+            else { initEmptyData(); }
+            renderAll();
+        };
+
+        function initEmptyData() {
+            classes.forEach(c => { 
+                appData.students[c] = []; 
+                appData.attendance[c] = {};
+                appData.grades[c] = {}; 
+            });
+            save();
+        }
+
+        function save() { localStorage.setItem('sekolah_smart_v5', JSON.stringify(appData)); }
+
+        function resetAll() {
+            if(confirm("Hapus SEMUA DATA?")) { localStorage.removeItem('sekolah_smart_v5'); location.reload(); }
+        }
+
+        function renderAll() {
+            renderSidebar(); 
+            renderTabs(); 
+            renderTableHeader(); 
+            renderTableBody(); 
+            updateInfoBox();
+        }
+
+        function renderSidebar() {
+            const list = document.getElementById('classList');
+            list.innerHTML = '';
+            classes.forEach((c, idx) => {
+                const li = document.createElement('li');
+                const btn = document.createElement('button');
+                btn.className = `class-btn ${idx === appData.currentClassIdx ? 'active' : ''}`;
+                btn.innerText = c;
+                btn.onclick = () => switchClass(idx);
+                li.appendChild(btn);
+                list.appendChild(li);
+            });
+            document.getElementById('pageTitle').innerText = `${classes[appData.currentClassIdx]} - ${months[appData.currentMonthIdx]}`;
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('monthTabs');
+            container.innerHTML = '';
+            months.forEach((m, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `tab ${idx === appData.currentMonthIdx ? 'active' : ''}`;
+                btn.innerText = m;
+                btn.onclick = () => switchMonth(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function updateInfoBox() {
+            const info = document.getElementById('logicInfo');
+            if(appData.viewMode === 'hasil') info.style.display = 'block';
+            else info.style.display = 'none';
+        }
+
+        function switchView(mode) {
+            appData.viewMode = mode;
+            document.getElementById('btnViewAbsen').className = `view-btn ${mode === 'absen' ? 'active' : ''}`;
+            document.getElementById('btnViewNilai').className = `view-btn mode-grade ${mode === 'nilai' ? 'active' : ''}`;
+            document.getElementById('btnViewHasil').className = `view-btn mode-result ${mode === 'hasil' ? 'active' : ''}`;
+            renderTableHeader();
+            renderTableBody();
+            updateInfoBox();
+        }
+
+        function renderTableHeader() {
+            const tr = document.getElementById('tableHeader');
+            tr.innerHTML = '<th class="sticky-col">Nama Siswa</th>';
+            
+            if(appData.viewMode === 'hasil') {
+                // Header Hasil Akhir
+                tr.innerHTML += `
+                    <th>Rata-rata Nilai</th>
+                    <th>Ringkasan Absen (H/S/I/A)</th>
+                    <th>Penalti</th>
+                    <th style="color:#166534;">Hasil Akhir</th>
+                `;
+            } else {
+                // Header Standar (Tgl 1-31)
+                for(let i=1; i<=totalDays; i++) {
+                    const th = document.createElement('th');
+                    th.innerText = i;
+                    tr.appendChild(th);
+                }
+            }
+        }
+
+        function renderTableBody() {
+            const cls = classes[appData.currentClassIdx];
+            const mth = months[appData.currentMonthIdx];
+            const students = appData.students[cls] || [];
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if(students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:#aaa;">Belum ada data siswa.</td></tr>`;
+                return;
+            }
+
+            students.forEach((name, idx) => {
+                const tr = document.createElement('tr');
+                
+                // Kolom Nama
+                const tdName = document.createElement('td');
+                tdName.className = 'sticky-col';
+                tdName.innerHTML = `<span>${name}</span> <span class="btn-del" onclick="deleteStudent(${idx})">&times;</span>`;
+                tr.appendChild(tdName);
+
+                if(appData.viewMode === 'hasil') {
+                    // === LOGIKA HASIL AKHIR ===
+                    
+                    // 1. Hitung Nilai Harian Rata-rata
+                    let totalNilai = 0;
+                    let countNilai = 0;
+                    let gradeData = appData.grades[cls][name] && appData.grades[cls][name][mth] ? appData.grades[cls][name][mth] : {};
+                    for(let d=1; d<=totalDays; d++) {
+                        if(gradeData[d] && gradeData[d] !== "") {
+                            totalNilai += parseInt(gradeData[d]);
+                            countNilai++;
+                        }
+                    }
+                    let avgNilai = countNilai > 0 ? (totalNilai / countNilai).toFixed(1) : "-";
+
+                    // 2. Hitung Penalti Absensi
+                    let counts = {h:0, s:0, i:0, a:0};
+                    let attData = appData.attendance[cls][name] && appData.attendance[cls][name][mth] ? appData.attendance[cls][name][mth] : {};
+                    for(let d=1; d<=totalDays; d++) {
+                        let s = attData[d];
+                        if(s == 'H') counts.h++; else if(s == 'S') counts.s++; else if(s == 'I') counts.i++; else if(s == 'A') counts.a++;
+                    }
+
+                    let totalPenalty = (counts.a * PENALTY_ALPHA) + (counts.s * PENALTY_SAKIT) + (counts.i * PENALTY_IZIN);
+
+                    // 3. Hitung Hasil Akhir
+                    // Dasar: Jika ada nilai harian, pakai itu. Jika tidak, dasar = 100.
+                    let baseScore = (avgNilai !== "-") ? parseFloat(avgNilai) : 100;
+                    let finalScore = baseScore - totalPenalty;
+                    if(finalScore < 0) finalScore = 0;
+                    finalScore = finalScore.toFixed(1);
+
+                    // Render Kolom Hasil
+                    tr.innerHTML += `
+                        <td style="font-weight:bold; color:var(--secondary);">${avgNilai}</td>
+                        <td><span style="font-size:0.8rem;">H:${counts.h} S:${counts.s} I:${counts.i} A:${counts.a}</span></td>
+                        <td style="color:#ef4444;">-${totalPenalty}</td>
+                        <td>
+                            <span class="score-badge ${finalScore >= 80 ? 'score-high' : finalScore >= 60 ? 'score-med' : 'score-low'}">
+                                ${finalScore}
+                            </span>
+                        </td>
+                    `;
+
+                } else {
+                    // === TAMPILAN INPUT ===
+                    for(let day=1; day<=totalDays; day++) {
+                        const td = document.createElement('td');
+
+                        if(appData.viewMode === 'absen') {
+                            let status = "";
+                            if (appData.attendance[cls] && appData.attendance[cls][name] && appData.attendance[cls][name][mth]) {
+                                status = appData.attendance[cls][name][mth][day] || "";
+                            }
+                            td.className = `day-cell status-${status}`;
+                            td.innerText = status;
+                            td.onclick = () => toggleStatus(cls, name, mth, day);
+                        } else {
+                            let grade = "";
+                            if (appData.grades[cls] && appData.grades[cls][name] && appData.grades[cls][name][mth]) {
+                                grade = appData.grades[cls][name][mth][day] || "";
+                            }
+                            const input = document.createElement('input');
+                            input.type = 'number';
+                            input.className = 'grade-input';
+                            input.value = grade;
+                            input.placeholder = "-";
+                            input.onchange = (e) => updateGrade(cls, name, mth, day, e.target.value);
+                            td.appendChild(input);
+                        }
+                        tr.appendChild(td);
+                    }
+                }
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Logic Functions ---
+        function toggleStatus(cls, name, mth, day) {
+            if(!appData.attendance[cls][name]) appData.attendance[cls][name] = {};
+            if(!appData.attendance[cls][name][mth]) appData.attendance[cls][name][mth] = {};
+            const currentStatus = appData.attendance[cls][name][mth][day] || "";
+            const currentIndex = statusCycle.indexOf(currentStatus);
+            const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
+            appData.attendance[cls][name][mth][day] = nextStatus;
+            save();
+            renderTableBody(); 
+        }
+
+        function updateGrade(cls, name, mth, day, value) {
+            if(!appData.grades[cls][name]) appData.grades[cls][name] = {};
+            if(!appData.grades[cls][name][mth]) appData.grades[cls][name][mth] = {};
+            appData.grades[cls][name][mth][day] = value;
+            save();
+            // Tidak re-render body saat input grade agar input tidak hilang fokus
+        }
+
+        // --- Utility ---
+        function handleEnter(e) { if(e.key === 'Enter') addStudent(); }
+        function addStudent() {
+            const inp = document.getElementById('inpName');
+            const name = inp.value.trim();
+            const cls = classes[appData.currentClassIdx];
+            if(!name) return alert("Nama kosong!");
+            if(appData.students[cls].includes(name)) return alert("Nama sudah ada!");
+            appData.students[cls].push(name);
+            save();
+            renderTableBody(); 
+            inp.value = ''; inp.focus();
+        }
+        function deleteStudent(idx) {
+            const cls = classes[appData.currentClassIdx];
+            const name = appData.students[cls][idx];
+            if(confirm(`Hapus ${name}?`)) {
+                appData.students[cls].splice(idx, 1);
+                delete appData.attendance[cls][name];
+                delete appData.grades[cls][name]; 
+                save();
+                renderTableBody();
+            }
+        }
+        function switchClass(idx) { appData.currentClassIdx = idx; renderAll(); document.getElementById('inpName').value = ''; if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open'); }
+        function switchMonth(idx) { appData.currentMonthIdx = idx; renderTabs(); renderTableBody(); }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+        // --- DOWNLOAD LAPORAN (HASIL AKHIR) ---
+        function downloadCSV() {
+            const cls = classes[appData.currentClassIdx];
+            const mth = months[appData.currentMonthIdx];
+            const students = appData.students[cls] || [];
+            if(students.length === 0) { alert("Tidak ada data."); return; }
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+            let headers = ["Nama Siswa", "Rata-rata Harian", "Ringkasan Absen", "Penalti", "Nilai Akhir"];
+            csvContent += headers.join(",") + "\r\n";
+
+            students.forEach(name => {
+                // Hitung Ulang untuk CSV
+                let totalNilai = 0, countNilai = 0;
+                let gradeData = appData.grades[cls][name] && appData.grades[cls][name][mth] ? appData.grades[cls][name][mth] : {};
+                for(let d=1; d<=totalDays; d++) {
+                    if(gradeData[d] && gradeData[d] !== "") {
+                        totalNilai += parseInt(gradeData[d]); countNilai++;
+                    }
+                }
+                let avgNilai = countNilai > 0 ? (totalNilai / countNilai).toFixed(1) : "100"; // Default 100 jika kosong
+
+                let counts = {h:0, s:0, i:0, a:0};
+                let attData = appData.attendance[cls][name] && appData.attendance[cls][name][mth] ? appData.attendance[cls][name][mth] : {};
+                for(let d=1; d<=totalDays; d++) {
+                    let s = attData[d];
+                    if(s == 'H') counts.h++; else if(s == 'S') counts.s++; else if(s == 'I') counts.i++; else if(s == 'A') counts.a++;
+                }
+
+                let totalPenalty = (counts.a * PENALTY_ALPHA) + (counts.s * PENALTY_SAKIT) + (counts.i * PENALTY_IZIN);
+                let baseScore = parseFloat(avgNilai);
+                let finalScore = Math.max(0, (baseScore - totalPenalty)).toFixed(1);
+
+                let row = [`"${name}"`, avgNilai, `H:${counts.h} S:${counts.s} I:${counts.i} A:${counts.a}`, `-${totalPenalty}`, finalScore];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Hasil_Akhir_${cls}_${mth}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
